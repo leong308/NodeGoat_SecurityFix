@@ -1,4 +1,8 @@
-const bcrypt = require("bcrypt-nodejs");
+// (01) Replace obsolete bcrypt-nodejs with bcryptjs, a JavaScript bcrypt package
+// (01) that avoids native compilation during installation. Changing this import
+// (01) alone does not hash passwords: creation and login still use plaintext until
+// (01) the authentication changes in Fix 05.
+const bcrypt = require("bcryptjs");
 
 /* The UserDAO must be constructed with a connected database object */
 function UserDAO(db) {

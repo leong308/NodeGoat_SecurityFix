@@ -29,3 +29,9 @@ test/e2e/videos/
 
 # ignore Snyk Code scanner files
 .dccache
+
+# (01) Keep installed packages, local environment secrets and captured evidence
+# (01) out of ordinary Git tracking. Ignore rules do not remove files already tracked.
+node_modules/
+.env
+evidence/

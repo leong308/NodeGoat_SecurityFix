@@ -1,6 +1,8 @@
-Dockerfile
-docker-compose.yml
-.dockerignore
+# (01) Docker ignores these paths when sending files to the image builder.
+# (01) Exclude Git history, local packages, .env secrets, remediation tools and
+# (01) captured evidence. Dependencies are installed inside the image using npm ci.
 .git
-.github
-.gitignore
+node_modules
+.env
+kit
+evidence

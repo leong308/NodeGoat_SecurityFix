@@ -1,0 +1,47 @@
+# (01) Compose starts two cooperating services: MongoDB stores records and web runs NodeGoat
+services:
+  mongo:
+    # (01) Pin both MongoDB version and image
+    image: mongo:8.0.32@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+    # (01) Restart a failed service automatically unless stop it
+    restart: unless-stopped
+    # (01) Place to store database files
+    volumes:
+      - mongo-data:/data/db
+    # (01) Join shared backend network
+    networks: [backend]
+    # (01) Run a small database ping to determine when MongoDB is ready to respond.
+    healthcheck:
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ping:1}).ok"]
+      # (01) Check every five seconds, up to 20 times
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  web:
+    # (01) Build NodeGoat from the Dockerfile
+    build: .
+    # (01) Apply same automatic restart policy to application server
+    restart: unless-stopped
+    # (01) Wait for successful MongoDB health check before starting web to avoid connection race
+    depends_on:
+      mongo:
+        condition: service_healthy
+    # (01) Load local secrets from .env
+    env_file: .env
+    # (01) Inside Docker, mongo is the database service's network name
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/nodegoat
+      # (01) production run mode
+      NODE_ENV: production
+    # (01) Publish web port 4000 only on this PC
+    # (01) Other machines cannot access through LAN interface
+    ports: ["127.0.0.1:4000:4000"]
+    # (01) Attach web to the same network as MongoDB so connection can succeed
+    networks: [backend]
+# (01) Declare shared Docker network
+networks:
+  backend:
+# (01) Declare mongo storage volume
+volumes:
+  mongo-data:

@@ -49,7 +49,8 @@
             </div>
             <!-- /.row -->
 
-            {% if userNameError || firstNameError || lastNameError || passwordError || verifyError || emailError %}
+            {# (01) Nunjucks uses "or" instead of JavaScript-style "||". Show the existing error panel if any field has an error; this expression displays errors rather than validating input itself. #}
+            {% if userNameError or firstNameError or lastNameError or passwordError or verifyError or emailError %}
             <div class="row">
                 <div class="col-lg-12">
                     <div class="alert alert-dismissable alert-danger">
