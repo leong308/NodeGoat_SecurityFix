@@ -21,6 +21,9 @@ function AllocationsHandler(db) {
         } = req.query;
 
         allocationsDAO.getByUserIdAndThreshold(userId, threshold, (err, allocations) => {
+            // (03) Return fixed message for invalid filters
+            if (err && err.status === 400) return res.status(400).send("Invalid allocation threshold.");
+            // (03) Retain existing handling for other errors / successful outcomes
             if (err) return next(err);
             return res.render("allocations", {
                 userId,

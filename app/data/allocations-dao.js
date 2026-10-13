@@ -50,16 +50,27 @@ const AllocationsDAO = function(db){
                 });
             }
 
-            return callback(err, null);
+            // (03) success branch supplies the result
+            if (err) return callback(err, null);
         });
     };
 
     this.getByUserIdAndThreshold = (userId, threshold, callback) => {
         const parsedUserId = parseInt(userId);
 
-        const searchCriteria = () => {
-
-            if (threshold) {
+        // (03) Reject identifiers outside positive safe-integer range
+        if (!Number.isSafeInteger(parsedUserId) || parsedUserId < 1) return callback(new Error("Invalid user identifier"));
+        // (03) Match numeric user ID through MongoDB's query
+        const criteria={userId:parsedUserId};
+        // (03) Missing or empty thresholds mean no stocks filter
+        if (threshold !== undefined && threshold !== "") {
+            // (03) Reuse (02)'s decimal policy, allocation thresholds allow 0 - 100
+            const value=require("../lib/validation").decimal(threshold,100);
+            // (03) Reject invalid input before sending query to MongoDB
+            if(value===null) return callback(Object.assign(new Error("Invalid allocation threshold"),{status:400}));
+            // (03) compares numeric data
+            criteria.stocks={$gt:value};
+        }
                 /*
                 // Fix for A1 - 2 NoSQL Injection - escape the threshold parameter properly
                 // Fix this NoSQL Injection which doesn't sanitze the input parameter 'threshold' and allows attackers
@@ -74,18 +85,11 @@ const AllocationsDAO = function(db){
                 }
                 throw `The user supplied threshold: ${parsedThreshold} was not valid.`;
                 */
-                return {
-                    $where: `this.userId == ${parsedUserId} && this.stocks > '${threshold}'`
-                };
-            }
-            return {
-                userId: parsedUserId
-            };
-        };
+        // (03) The old active $where string was removed; no JavaScript query is built.
 
-        allocationsCol.find(searchCriteria()).toArray((err, allocations) => {
+        allocationsCol.find(criteria).toArray((err, allocations) => {
             if (err) return callback(err, null);
-            if (!allocations.length) return callback("ERROR: No allocations found for the user", null);
+            if (!allocations.length) return callback(null, []);
 
             let doneCounter = 0;
             const userAllocations = [];
