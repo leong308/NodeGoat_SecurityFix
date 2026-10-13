@@ -26,12 +26,16 @@ function ContributionsHandler(db) {
     };
 
     this.handleContributionsUpdate = (req, res, next) => {
-
+        // (02) eval implementation removed from the active code.
         /*jslint evil: true */
         // Insecure use of eval() to parse inputs
-        const preTax = eval(req.body.preTax);
-        const afterTax = eval(req.body.afterTax);
-        const roth = eval(req.body.roth);
+        // (02) Load a strict decimal validator, treats each field as numeric data
+        const {decimal}=require("../lib/validation");
+        // (02) Validate all three percentages independently in the range 0-30.
+        // (02) "12.50" becomes 12.5
+        const preTax=decimal(req.body.preTax,30);
+        const afterTax=decimal(req.body.afterTax,30);
+        const roth=decimal(req.body.roth,30);
 
         /*
         //Fix for A1 -1 SSJS Injection attacks - uses alternate method to eval
@@ -44,9 +48,12 @@ function ContributionsHandler(db) {
         } = req.session;
 
         //validate contributions
-        const validations = [isNaN(preTax), isNaN(afterTax), isNaN(roth), preTax < 0, afterTax < 0, roth < 0];
+        // (02) Check validator's explicit null rejection & range rejection result
+        const validations = [preTax === null, afterTax === null, roth === null, preTax < 0, afterTax < 0, roth < 0];
         const isInvalid = validations.some(validation => validation);
         if (isInvalid) {
+            // (02) Return the existing error page before calling DAO (database writer)
+            // (02) Invalid input cannot execute code or update records
             return res.render("contributions", {
                 updateError: "Invalid contribution percentages",
                 userId,
@@ -62,6 +69,7 @@ function ContributionsHandler(db) {
             });
         }
 
+        // (02) Only validated numbers - sum passes the existing rule reach this database update
         contributionsDAO.update(userId, preTax, afterTax, roth, (err, contributions) => {
 
             if (err) return next(err);
