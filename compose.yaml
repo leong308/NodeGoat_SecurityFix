@@ -18,6 +18,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    # (05) Bind MongoDB to localhost only to prevent external access.
+    ports:
+      - "127.0.0.1:27017:27017"
   web:
     # (01) Build NodeGoat from the Dockerfile
     build: .

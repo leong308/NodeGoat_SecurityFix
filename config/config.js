@@ -1,5 +1,8 @@
 // (01) Strict mode makes accidental JavaScript mistakes throw an error
 "use strict";
+// (04) Require a strong session secret when running in production.
+if (process.env.NODE_ENV === "production" && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32))
+  throw new Error("SESSION_SECRET must have at least 32 characters");
 // (01) Replace old environment-file merge and full configuration logging
 // (01) process.env reads values supplied by the environment
 // (01) module does not load .env itself and not print secrets

@@ -22,7 +22,19 @@ function createApp(db, options = {}) {
   app.use(express.json({ limit: "16kb" }));
   app.use(express.urlencoded({ extended: false, limit: "16kb" }));
   // (01) Install session handling using the configured signing secret
-  app.use(session({ secret: config.cookieSecret, saveUninitialized: true, resave: true, ...options.session }));
+  // app.use(session({ secret: config.cookieSecret, saveUninitialized: true, resave: true, ...options.session }));
+  // (04) Configure secure session cookies and session settings
+  app.use(session({
+    name: "retire.sid", secret: config.cookieSecret, saveUninitialized: false, resave: false,
+    // (04) Protect the session cookie from JavaScript and cross-site requests
+    cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60 * 1000, secure: process.env.HTTPS_ONLY === "true" }, ...options.session
+  }));
+  // (04)Limit login and signup attempts to help prevent brute-force attacks
+  const { rateLimit } = require("express-rate-limit");
+  app.use(["/login", "/signup"], rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: "draft-8", legacyHeaders: false,
+    message: "Too many authentication attempts. Try again later."
+  }));
   // (01) Replace Swig with Nunjucks to render the existing HTML templates
   // (04) Enable automatic escaping in Nunjucks to help prevent Cross-Site Scripting (XSS)
   // by escaping HTML special characters in template output
