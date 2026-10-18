@@ -1,4 +1,7 @@
 /* The ProfileDAO must be constructed with a connected database object */
+// (04) Use the same website URL policy before database writes.
+const { safeWebsite } = require("../lib/output");
+
 function ProfileDAO(db) {
 
     "use strict";
@@ -39,10 +42,16 @@ function ProfileDAO(db) {
     };
     */
 
-    this.updateUser = (userId, firstName, lastName, ssn, dob, address, bankAcc, bankRouting, callback) => {
+    this.updateUser = (userId, firstName, lastName, ssn, dob, address, bankAcc, bankRouting, website, callback) => {
 
         // Create user document
         const user = {};
+        // (04) Save valid websites, allow clearing, and preserve omitted values.
+        if (website !== undefined) {
+            const validatedWebsite = safeWebsite(website);
+            if (website !== "" && !validatedWebsite) return callback(Object.assign(new Error("Website must be a valid HTTPS URL."), { status: 400 }), null);
+            user.website = validatedWebsite;
+        }
         if (firstName) {
             user.firstName = firstName;
         }
@@ -76,10 +85,10 @@ function ProfileDAO(db) {
         */
 
         users.update({
-                _id: parseInt(userId)
-            }, {
-                $set: user
-            },
+            _id: parseInt(userId)
+        }, {
+            $set: user
+        },
             err => {
                 if (!err) {
                     console.log("Updated user profile");
@@ -93,8 +102,8 @@ function ProfileDAO(db) {
 
     this.getByUserId = (userId, callback) => {
         users.findOne({
-                _id: parseInt(userId)
-            },
+            _id: parseInt(userId)
+        },
             (err, user) => {
                 if (err) return callback(err, null);
                 /*

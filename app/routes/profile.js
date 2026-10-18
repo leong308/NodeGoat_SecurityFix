@@ -1,5 +1,6 @@
+// (04) Import the safeWebsite helper to validate website URLs before displaying them
 const ProfileDAO = require("../data/profile-dao").ProfileDAO;
-const ESAPI = require("node-esapi");
+const { safeWebsite } = require("../lib/output");
 const {
     environmentalScripts
 } = require("../../config/config");
@@ -25,7 +26,13 @@ function ProfileHandler(db) {
             // while the developer intentions were correct in encoding the user supplied input so it
             // doesn't end up as an XSS attack, the context is incorrect as it is encoding the firstname for HTML
             // while this same variable is also used in the context of a URL link element
-            doc.website = ESAPI.encoder().encodeForHTML(doc.website);
+            // (04) Keep the first name available for display in the profile template
+            doc.firstNameSafeString = doc.firstName;
+            // (04) URL-encode the first name before adding it to the Google search URL
+            // to prevent special characters from altering the URL query structure
+            doc.profileSearchUrl = "https://www.google.com/search?q=" + encodeURIComponent(doc.firstName || "");
+            // (04) Validate the website URL and allow only safe HTTPS links before rendering
+            doc.website = safeWebsite(doc.website);
             // fix it by replacing the above with another template variable that is used for 
             // the context of a URL in a link header
             // doc.website = ESAPI.encoder().encodeForURL(doc.website)
@@ -46,7 +53,8 @@ function ProfileHandler(db) {
             dob,
             address,
             bankAcc,
-            bankRouting
+            bankRouting,
+            website
         } = req.body;
 
         // Fix for Section: ReDoS attack
@@ -64,6 +72,8 @@ function ProfileHandler(db) {
             const firstNameSafeString = firstName;
             return res.render("profile", {
                 updateError: "Bank Routing number does not comply with requirements for format specified",
+                // (04) Keep the search destination safe when validation fails.
+                profileSearchUrl: "https://www.google.com/search?q=" + encodeURIComponent(firstName || ""),
                 firstNameSafeString,
                 lastName,
                 ssn,
@@ -71,6 +81,7 @@ function ProfileHandler(db) {
                 address,
                 bankAcc,
                 bankRouting,
+                website: safeWebsite(website),
                 environmentalScripts
             });
         }
@@ -88,12 +99,19 @@ function ProfileHandler(db) {
             address,
             bankAcc,
             bankRouting,
+            website,
             (err, user) => {
 
+                if (err && err.status === 400) return res.status(400).send(err.message);
                 if (err) return next(err);
 
                 // WARN: Applying any sting specific methods here w/o checking type of inputs could lead to DoS by HPP
                 //firstName = firstName.trim();
+                // (04) Preserve the first name for display after the profile update
+                user.firstNameSafeString = user.firstName;
+                // (04) URL-encode the updated first name before constructing the Google search URL
+                user.profileSearchUrl = "https://www.google.com/search?q=" + encodeURIComponent(user.firstName || "");
+                user.website = safeWebsite(user.website);
                 user.updateSuccess = true;
                 user.userId = userId;
 
