@@ -32,20 +32,6 @@ function UserDAO(db) {
         }), cb);
     };
 
-    // // Add email if set
-    // if (email) {
-    //     user.email = email;
-    // }
-
-    // this.getNextSequence("userId", (err, id) => {
-    //     if (err) {
-    //         return callback(err, null);
-    //     }
-    //     console.log(typeof (id));
-
-    //     user._id = id;
-    // });
-
     this.getRandomFutureDate = () => {
         const today = new Date();
         const day = (Math.floor(Math.random() * 10) + today.getDay()) % 29;
@@ -86,52 +72,6 @@ function UserDAO(db) {
             );
         });
     };
-    // // Helper function to compare passwords
-    // const comparePassword = (fromDB, fromUser) => {
-    //     // (05) Validate the username and password, then verify the password hash 
-    //     // and return the user only if the credentials are correct.
-    //     this.validateLogin = (name, password, cb) => {
-    //         if (typeof name !== "string" || !/^[A-Za-z0-9_]{3,20}$/.test(name) || typeof password !== "string" || password.length > 128)
-    //             return cb(Object.assign(new Error("Invalid credentials"), { invalidPassword: true }));
-    //         usersCol.findOne({ userName: name }, (e, user) => {
-    //             if (e) return cb(e);
-    //             // Absent users still run the same scrypt work to reduce username timing disclosure.
-    //             const dummy = "scrypt$32768$8$3$" + "0".repeat(32) + "$" + "0".repeat(128);
-    //             verifyPassword(password, user ? user.password : dummy).then(ok => ok && user ? cb(null, user) : cb(Object.assign(new Error("Invalid credentials"),
-    //                 { invalidPassword: true })), cb);
-    //         });
-    //     };
-    // }        /*
-    // Fix for A2-Broken Auth
-    // compares decrypted password stored in this.addUser()
-    // return bcrypt.compareSync(fromDB, fromUser);
-
-
-    // Callback to pass to MongoDB that validates a user document
-    const validateUserDoc = (err, user) => {
-
-        if (err) return callback(err, null);
-
-        if (user) {
-            if (comparePassword(password, user.password)) {
-                callback(null, user);
-            } else {
-                const invalidPasswordError = new Error("Invalid password");
-                // Set an extra field so we can distinguish this from a db error
-                invalidPasswordError.invalidPassword = true;
-                callback(invalidPasswordError, null);
-            }
-        } else {
-            const noSuchUserError = new Error("User: " + user + " does not exist");
-            // Set an extra field so we can distinguish this from a db error
-            noSuchUserError.noSuchUser = true;
-            callback(noSuchUserError, null);
-        }
-    };
-
-    usersCol.findOne({
-        userName: userName
-    }, validateUserDoc);
 
 
     // This is the good one, see the next function

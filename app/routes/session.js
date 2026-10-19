@@ -113,9 +113,9 @@ function SessionHandler(db) {
         if (!text(userName, 3, 20) || !/^[A-Za-z0-9_]+$/.test(userName) || !text(firstName, 1, 100) || !text(lastName, 1, 100)
             || !text(password, 15, 128) || password !== verify || !text(email, 0, 254) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))
             return res.status(400).render("signup", { passwordError: "Use a 15–128 character passphrase, matching confirmation, and valid profile fields." });
-        usersDAO.getUserByUserName(userName, (e, user) => {
+        userDAO.getUserByUserName(userName, (e, user) => {
             if (e) return next(e); if (user) return res.status(409).render("signup", { userNameError: "Registration could not be completed with that username." });
-            usersDAO.addUser(userName, firstName, lastName, password, email, (error, doc) => {
+            userDAO.addUser(userName, firstName, lastName, password, email, (error, doc) => {
                 if (error) {
                     if (error.code === 11000) return res.status(409).render("signup", { userNameError: "Registration could not be completed with that username." });
                     return next(error);
