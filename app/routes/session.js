@@ -23,14 +23,23 @@ function SessionHandler(db) {
     };
 
     this.isAdminUserMiddleware = (req, res, next) => {
-        if (req.session.userId) {
-            return userDAO.getUserById(req.session.userId, (err, user) => {
-                return user && user.isAdmin ? next() : res.redirect("/login");
-            });
-        }
-        console.log("redirecting to login");
-        return res.redirect("/login");
+        const userId = req.session?.userId;
 
+        if (userId === undefined || userId === null) {
+            return res.redirect("/login");
+        }
+
+        return userDAO.getUserById(userId, (err, user) => {
+            if (err) {
+                return next(err);
+            }
+
+            if (!user || user.isAdmin !== true) {
+                return res.status(403).send("Access denied.");
+            }
+
+            return next();
+        });
     };
 
     this.isLoggedInMiddleware = (req, res, next) => {
