@@ -64,16 +64,30 @@ function ProfileHandler(db) {
         // --
         // The Fix: Instead of using greedy quantifiers the same regex will work if we omit the second quantifier +
         // const regexPattern = /([0-9]+)\#/;
-        const regexPattern = /([0-9]+)+\#/;
-        // Allow only numbers with a suffix of the letter #, for example: 'XXXXXX#'
-        const testComplyWithRequirements = regexPattern.test(bankRouting);
+        // const regexPattern = /([0-9]+)+\#/;
+        // // Allow only numbers with a suffix of the letter #, for example: 'XXXXXX#'
+        // const testComplyWithRequirements = regexPattern.test(bankRouting);
+        // (09) Validate input types and lengths before evaluating regex.
+        const limits = {firstName: 100, lastName: 100, ssn: 32, dob: 10, address: 300, bankAcc: 34, bankRouting: 20, website: 2048};
+        const invalidFields = Object.entries(limits).some(
+            ([key, max]) =>
+                typeof req.body[key] !== "string" ||
+                req.body[key].length > max
+        );
+        // (09) Use a bounded regex without nested quantifiers.
+        // Never evaluate it against invalid or oversized input.
+        const testComplyWithRequirements =
+            !invalidFields &&
+            /^[0-9]{1,18}#$/.test(bankRouting) &&
+            (!dob || /^\d{4}-\d{2}-\d{2}$/.test(dob)) &&
+            (!website || Boolean(safeWebsite(website)));
         // if the regex test fails we do not allow saving
         if (testComplyWithRequirements !== true) {
             const firstNameSafeString = firstName;
-            return res.render("profile", {
+            return res.status(400).render("profile", {
                 updateError: "Bank Routing number does not comply with requirements for format specified",
                 // (04) Keep the search destination safe when validation fails.
-                profileSearchUrl: "https://www.google.com/search?q=" + encodeURIComponent(firstName || ""),
+                profileSearchUrl: "https://www.google.com/search?q=" + encodeURIComponent(typeof firstName === "string" ? firstName : ""),
                 firstNameSafeString,
                 lastName,
                 ssn,
@@ -81,7 +95,7 @@ function ProfileHandler(db) {
                 address,
                 bankAcc,
                 bankRouting,
-                website: safeWebsite(website),
+                website: typeof website === "string" ? safeWebsite(website) : "",
                 environmentalScripts
             });
         }

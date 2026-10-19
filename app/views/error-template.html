@@ -1,14 +1,17 @@
-<!doctype HTML>
-<html>
-
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Internal Error</title>
+    <meta charset="utf-8">
+    <title>Request unavailable</title>
 </head>
-
 <body>
+    <!-- (09) Do not expose raw exception details -->
+    <h1>Request unavailable</h1>
 
-    Oops..
-    <br>{{error}}
+    <p>{{message}}</p>
+
+    <p>Support reference: {{requestId}}</p>
+
+    <a href="/dashboard">Return to dashboard</a>
 </body>
-
 </html>

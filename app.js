@@ -15,6 +15,26 @@ function createApp(db, options = {}) {
   const app = express();
   // (01) Suppress the default header that advertises Express
   app.disable("x-powered-by");
+  // (09) Security headers and Content Security Policy.
+  app.use(require("helmet")({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: null
+      }
+    },
+    strictTransportSecurity: false
+  }));
+  // (09) Prevent sensitive responses from being stored in caches.
+  app.use((req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  });
   // (01) Serve browser files from app/assets before session handling
   app.use(express.static(path.join(__dirname, "app/assets")));
   // (01) Convert JSON and form data into req.body and limit each body to 16 KB
