@@ -38,7 +38,8 @@ const index = (app, db) => {
     app.post("/signup", sessionHandler.handleSignup);
 
     // Logout page
-    app.get("/logout", sessionHandler.displayLogoutPage);
+    // (08) Protect logout with POST and CSRF verification
+    app.post("/logout", isLoggedIn, sessionHandler.displayLogoutPage);
 
     // The main page of the app
     app.get("/dashboard", isLoggedIn, sessionHandler.displayWelcomePage);

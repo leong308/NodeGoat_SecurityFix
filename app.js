@@ -29,6 +29,8 @@ function createApp(db, options = {}) {
     // (04) Protect the session cookie from JavaScript and cross-site requests
     cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60 * 1000, secure: process.env.HTTPS_ONLY === "true" }, ...options.session
   }));
+  // (08) CSRF Protection
+  app.use(require("./app/lib/csrf"));
   // (04)Limit login and signup attempts to help prevent brute-force attacks
   const { rateLimit } = require("express-rate-limit");
   app.use(["/login", "/signup"], rateLimit({

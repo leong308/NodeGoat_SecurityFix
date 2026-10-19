@@ -64,7 +64,13 @@
                     <li><a id="research-menu-link" href="/research"><i class="fa fa-table"></i> Research</a>
                     </li>
                     {% endif %}
-                    <li><a id="logout-menu-link" href="/logout"><i class="fa fa-power-off"></i> Logout</a>
+                    <li>
+                        <form action="/logout" method="post" style="margin:0;">
+                            <input type="hidden" name="_csrf" value="{{csrftoken}}">
+                            <button type="submit" id="logout-menu-link" class="btn btn-link">
+                                <i class="fa fa-power-off"></i> Logout
+                            </button>
+                        </form>
                     </li>
                 </ul>
 
@@ -80,7 +86,13 @@
                             </li>
                             <li class="divider"></li>
                             {% endif %}
-                            <li><a href="/logout"><i class="fa fa-power-off"></i> Log Out</a>
+                            <li>
+                                <form action="/logout" method="post" style="margin:0;">
+                                    <input type="hidden" name="_csrf" value="{{csrftoken}}">
+                                    <button type="submit" class="btn btn-link">
+                                        <i class="fa fa-power-off"></i> Log Out
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </li>
