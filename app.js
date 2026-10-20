@@ -24,11 +24,15 @@ function createApp(db, options = {}) {
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:"],
         objectSrc: ["'none'"],
+        frameSrc: ["'self'", "https://www.youtube.com"],
         frameAncestors: ["'none'"],
         upgradeInsecureRequests: null
       }
     },
-    strictTransportSecurity: false
+    strictTransportSecurity: false,
+    referrerPolicy: {
+        policy: "strict-origin-when-cross-origin"
+    }
   }));
   // (09) Prevent sensitive responses from being stored in caches.
   app.use((req, res, next) => {

@@ -83,22 +83,46 @@ function ProfileHandler(db) {
             (!website || Boolean(safeWebsite(website)));
         // if the regex test fails we do not allow saving
         if (testComplyWithRequirements !== true) {
-            const firstNameSafeString = firstName;
+            // (09) Only pass bounded string values to the template.
+            // Never render malformed objects or oversized input.
+            const safeFormValue = (key) => {
+                const value = req.body[key];
+
+                return typeof value === "string" &&
+                    value.length <= limits[key]
+                    ? value
+                    : "";
+            };
+
+            const safeFirstName = safeFormValue("firstName");
+            const safeWebsiteValue = safeFormValue("website");
+
             return res.status(400).render("profile", {
-                updateError: "Bank Routing number does not comply with requirements for format specified",
-                // (04) Keep the search destination safe when validation fails.
-                profileSearchUrl: "https://www.google.com/search?q=" + encodeURIComponent(typeof firstName === "string" ? firstName : ""),
-                firstNameSafeString,
-                lastName,
-                ssn,
-                dob,
-                address,
-                bankAcc,
-                bankRouting,
-                website: typeof website === "string" ? safeWebsite(website) : "",
+                updateError: invalidFields
+                    ? "One or more profile fields are invalid."
+                    : "Bank Routing number does not comply with requirements for format specified",
+
+                // (04) Preserve safe URL construction.
+                profileSearchUrl:
+                    "https://www.google.com/search?q=" +
+                    encodeURIComponent(safeFirstName),
+
+                firstNameSafeString: safeFirstName,
+                lastName: safeFormValue("lastName"),
+                ssn: safeFormValue("ssn"),
+                dob: safeFormValue("dob"),
+                address: safeFormValue("address"),
+                bankAcc: safeFormValue("bankAcc"),
+                bankRouting: safeFormValue("bankRouting"),
+
+                website: safeWebsiteValue
+                    ? (safeWebsite(safeWebsiteValue) || "")
+                    : "",
+
                 environmentalScripts
             });
         }
+
 
         const {
             userId

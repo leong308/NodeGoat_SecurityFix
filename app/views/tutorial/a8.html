@@ -39,7 +39,7 @@
                 <p>
                     As browsers automatically send credentials like session cookies with HTTP requests to the server where cookies were received from, attackers can create malicious web pages which generate forged requests that are indistinguishable from legitimate ones.</p>
                 <p>For example, CSRF vulnerability can be exploited on profile form on the insecure demo application.</p>
-                <iframe width="560" height="315" src="//www.youtube.com/embed/vRDykS_2y3I?rel=0" frameborder="0" allowfullscreen></iframe>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/vRDykS_2y3I?rel=0" frameborder="0" allowfullscreen></iframe>
                 <p>To exploit it:
                     <ol>
                         <li>An attacker would need to host a forged form like below on a malicious sever.
@@ -94,8 +94,9 @@
             next(); 
         }); </pre> Next, this token can be included in a hidden form field in
                 <code>views/profile.html</code>as below.
-                <pre>
-    &lt;input type="hidden" name="_csrf" value="{{ csrftoken } }"&gt;</pre>
+                    <pre>{% raw %}
+                    &lt;input type="hidden" name="_csrf" value="{{ csrftoken }}"&gt;
+                    {% endraw %}</pre>
             </div>
         </div>
     </div>
