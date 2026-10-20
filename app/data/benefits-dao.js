@@ -17,7 +17,30 @@ function BenefitsDAO(db) {
             "isAdmin": {
                 $ne: true
             }
-        }).toArray((err, users) => callback(null, users));
+        }).toArray((err, users) => {
+
+            // (07) Propagate database errors.
+            if (err) {
+                return callback(err);
+            }
+
+            // (07) Return only the fields required by Benefits.
+            const benefitUsers = users.map(({
+                _id,
+                userName,
+                firstName,
+                lastName,
+                benefitStartDate
+            }) => ({
+                _id,
+                userName,
+                firstName,
+                lastName,
+                benefitStartDate
+            }));
+
+            return callback(null, benefitUsers);
+        });
     };
 
     this.updateBenefits = (userId, startDate, callback) => {
