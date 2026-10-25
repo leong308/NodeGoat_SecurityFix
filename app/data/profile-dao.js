@@ -1,6 +1,8 @@
 /* The ProfileDAO must be constructed with a connected database object */
 // (04) Use the same website URL policy before database writes.
 const { safeWebsite } = require("../lib/output");
+// (10) Use authenticated encryption for sensitive profile fields.
+const { encrypt, decrypt, SENSITIVE_FIELDS } = require("../lib/field-crypto");
 
 function ProfileDAO(db) {
 
@@ -15,6 +17,7 @@ function ProfileDAO(db) {
 
     const users = db.collection("users");
 
+    // (10) Using a shared IV and missing authentication are unsafe.
     /* Fix for A6 - Sensitive Data Exposure
 
     // Use crypto module to save sensitive data such as ssn, dob in encrypted format
@@ -58,6 +61,8 @@ function ProfileDAO(db) {
         if (lastName) {
             user.lastName = lastName;
         }
+        // (10) The old setters stored sensitive data as readable text.
+        /*
         if (address) {
             user.address = address;
         }
@@ -72,6 +77,22 @@ function ProfileDAO(db) {
         }
         if (dob) {
             user.dob = dob;
+        }
+        */
+        // (10) Keep readable form values separate from the encrypted database values.
+        const display = { ...user };
+        const submitted = { ssn, dob, address, bankAcc, bankRouting };
+        const ownerId = parseInt(userId, 10);
+        try {
+            for (const field of SENSITIVE_FIELDS) {
+                // (10) Preserve omitted fields; an empty string clears an old value.
+                if (submitted[field] === undefined) continue;
+                display[field] = submitted[field];
+                user[field] = encrypt(submitted[field], ownerId, field);
+            }
+        } catch (error) {
+            // (10) Stop the update if encryption or key validation fails.
+            return callback(error, null);
         }
         /*
         // Fix for A7 - Sensitive Data Exposure
@@ -92,7 +113,9 @@ function ProfileDAO(db) {
             err => {
                 if (!err) {
                     console.log("Updated user profile");
-                    return callback(null, user);
+                    // (10) The old return would show ciphertext after the encrypted write.
+                    // return callback(null, user);
+                    return callback(null, display);
                 }
 
                 return callback(err, null);
@@ -113,7 +136,25 @@ function ProfileDAO(db) {
                 user.dob = user.dob ? decrypt(user.dob) : "";
                 */
 
-                callback(null, user);
+                if (!user) return callback(null, null);
+                let display;
+                try {
+                    // (10) Send only profile fields to the view, excluding password hashes and roles.
+                    display = {};
+                    for (const field of ["_id", "userName", "firstName", "lastName", "website"]) {
+                        if (user[field] !== undefined) display[field] = user[field];
+                    }
+                    for (const field of SENSITIVE_FIELDS) {
+                        // (10) Decrypt a copy so the stored document remains encrypted.
+                        display[field] = decrypt(user[field], user._id, field);
+                    }
+                } catch (error) {
+                    // (10) Reject damaged ciphertext or unmigrated plaintext instead of displaying it.
+                    return callback(error, null);
+                }
+                // (10) The old callback exposed the full stored user object.
+                // callback(null, user);
+                callback(null, display);
             }
         );
     };
