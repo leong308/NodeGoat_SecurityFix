@@ -98,7 +98,9 @@ function SessionHandler(db) {
     // Check the user's session before displaying the dashboard.
     this.displayLogoutPage = (req, res, next) => req.session.destroy(e => {
         if (e) return next(e);
-        res.clearCookie("retire.sid"); res.redirect("/login");
+        // (11) Clear the cookie with the same HTTPS attributes used when it was issued.
+        // res.clearCookie("retire.sid"); res.redirect("/login");
+        res.clearCookie("retire.sid", { httpOnly: true, sameSite: "lax", secure: true }); res.redirect("/login");
     });
 
     this.displaySignupPage = (req, res) => {

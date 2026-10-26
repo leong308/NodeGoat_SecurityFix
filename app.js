@@ -8,6 +8,8 @@ const nunjucks = require("nunjucks");
 const { marked } = require("marked");
 const routes = require("./app/routes");
 const config = require("./config/config");
+// (11) Use the configured HTTPS origin for the transport policy.
+const { getTransportConfig } = require("./app/lib/transport");
 // (01) Build and return the application separately from starting HTTP listener
 // (01) db is the connected database adapter; 
 // (01) options lets the caller provide a session store
@@ -15,6 +17,13 @@ function createApp(db, options = {}) {
   const app = express();
   // (01) Suppress the default header that advertises Express
   app.disable("x-powered-by");
+  const transport = getTransportConfig();
+  // (11) Direct TLS required; forwarded headers must not pretend a request is secure.
+  app.set("trust proxy", false);
+  app.use((req, res, next) => {
+    if (!req.secure) return res.set("Cache-Control", "no-store").status(400).type("text/plain").send("HTTPS is required.");
+    next();
+  });
   // (09) Security headers and Content Security Policy.
   app.use(require("helmet")({
     contentSecurityPolicy: {
@@ -26,12 +35,17 @@ function createApp(db, options = {}) {
         objectSrc: ["'none'"],
         frameSrc: ["'self'", "https://www.youtube.com"],
         frameAncestors: ["'none'"],
-        upgradeInsecureRequests: null
+        // (11) The old policy allowed insecure subresources; upgrade them on HTTPS pages.
+        // upgradeInsecureRequests: null
+        upgradeInsecureRequests: []
       }
     },
-    strictTransportSecurity: false,
+    // (11) Enable HSTS on deployment domains.
+    // strictTransportSecurity: false,
+    // (11) Exclude localhost so other local applications are not forced onto HTTPS.
+    strictTransportSecurity: transport.hsts ? { maxAge: 31536000, includeSubDomains: false, preload: false } : false,
     referrerPolicy: {
-        policy: "strict-origin-when-cross-origin"
+      policy: "strict-origin-when-cross-origin"
     }
   }));
   // (09) Prevent sensitive responses from being stored in caches.
@@ -48,10 +62,20 @@ function createApp(db, options = {}) {
   // (01) Install session handling using the configured signing secret
   // app.use(session({ secret: config.cookieSecret, saveUninitialized: true, resave: true, ...options.session }));
   // (04) Configure secure session cookies and session settings
+  // (11) The old environment toggle could allow a session cookie over HTTP.
+  // app.use(session({
+  //   name: "retire.sid", secret: config.cookieSecret, saveUninitialized: false, resave: false,
+  //   cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60 * 1000, secure: process.env.HTTPS_ONLY === "true" }, ...options.session
+  // }));
+  const sessionOptions = options.session || {};
   app.use(session({
     name: "retire.sid", secret: config.cookieSecret, saveUninitialized: false, resave: false,
     // (04) Protect the session cookie from JavaScript and cross-site requests
-    cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60 * 1000, secure: process.env.HTTPS_ONLY === "true" }, ...options.session
+    // cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60 * 1000, secure: process.env.HTTPS_ONLY === "true" }, ...options.session
+    ...sessionOptions,
+    // (11) Never trust proxy headers or let store options disable cookie protection.
+    proxy: false,
+    cookie: { maxAge: 30 * 60 * 1000, ...sessionOptions.cookie, httpOnly: true, sameSite: "lax", secure: true }
   }));
   // (08) CSRF Protection
   app.use(require("./app/lib/csrf"));

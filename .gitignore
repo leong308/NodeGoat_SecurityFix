@@ -38,3 +38,10 @@ docs/
 AGENTS.md
 /test/
 /tests/
+
+# (11) Generated TLS material stays local.
+certs/
+*.key
+*.pem
+*.pfx
+*.p12

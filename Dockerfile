@@ -14,6 +14,7 @@ RUN npm ci --omit=dev --ignore-scripts
 COPY . .
 # (01) Keep baseline's non-root execution: server runs as node account, having fewer permission than root
 USER node
+# (11) This port now carries native HTTPS instead of plain HTTP.
 # (01) HTTP port
 # (01) compose.yaml controls PC access from this port setting
 EXPOSE 4000

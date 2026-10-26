@@ -37,8 +37,22 @@ services:
       MONGODB_URI: mongodb://mongo:27017/nodegoat
       # (01) production run mode
       NODE_ENV: production
+      # (11) Use native HTTPS and the mounted certificate; retain the existing database.
+      PUBLIC_ORIGIN: https://localhost:4000
+      HTTPS_ONLY: "true"
+      TLS_KEY_FILE: /run/tls/localhost.key
+      TLS_CERT_FILE: /run/tls/localhost.crt
+    # (11) Mount TLS files read-only.
+    volumes:
+      - type: bind
+        source: ./certs
+        target: /run/tls
+        read_only: true
+        bind:
+          create_host_path: false
     # (01) Publish web port 4000 only on this PC
     # (01) Other machines cannot access through LAN interface
+    # (11) Port 4000 now carries HTTPS only.
     ports: ["127.0.0.1:4000:4000"]
     # (01) Attach web to the same network as MongoDB so connection can succeed
     networks: [backend]

@@ -6,3 +6,9 @@ node_modules
 .env
 kit
 evidence
+# (11) Mount TLS files at runtime and exclude generated reports from the image.
+certs
+**/*.key
+**/*.pem
+**/*.pfx
+**/*.p12
