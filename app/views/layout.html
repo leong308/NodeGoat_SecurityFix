@@ -48,6 +48,14 @@
                     {% if user.isAdmin %}
                     <li><a id="benefits-menu-link" href="/benefits"><i class="fa fa-calendar"></i> Benefits</a>
                     </li>
+
+                    <!-- (12) Administrator-only Security Analytics navigation -->
+                    <li>
+                        <a id="security-menu-link" href="/security-dashboard">
+                            <i class="fa fa-shield"></i> Security Analytics
+                        </a>
+                    </li>
+
                     {% else %}
                     <li><a id="dashboard-menu-link" href="/"><i class="fa fa-dashboard"></i> Dashboard</a>
                     </li>

@@ -19,6 +19,15 @@ async function main() {
   // (01) client.db() selects the database named in the connection URL
   // (01) ttl:1800 supplies a fallback session of 1,800 seconds (30 minutes).
   const app = createApp(legacyDatabase(client.db()), { session: { store: MongoStore.create({ mongoUrl: config.db, ttl: 1800 }) } });
+
+  
+  // (12) Configure a 90-day retention policy for security audit records.
+  // (12) MongoDB automatically expires old audit events using a TTL index.
+  await client.db().collection("auditEvents").createIndex(
+    { at: 1 },
+    { expireAfterSeconds: 90 * 24 * 60 * 60 }
+  );
+
   // (01) Listen on the container's interfaces. Compose still limits the published
   // (01) host endpoint to 127.0.0.1; the container bind address is a different layer.
   // (11) The old listener sent browser traffic without TLS.

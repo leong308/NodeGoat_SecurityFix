@@ -1,0 +1,66 @@
+
+{% extends "./layout.html" %}
+
+{% block title %}
+Administrator Security Analytics
+{% endblock %}
+
+{% block content %}
+
+<!-- (12) Display security audit information to administrators. -->
+<h1>Security Event Dashboard</h1>
+
+<!-- (12) Show summaries of recorded HTTP requests. -->
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h3 class="panel-title">Security Analytics Summary</h3>
+    </div>
+
+    <div class="panel-body">
+        <p>Total recorded requests: {{ total }}</p>
+        <p>Successful / Redirected: {{ counts.success }}</p>
+        <p>Denied / Invalid Requests: {{ counts.denied }}</p>
+        <p>Server Errors: {{ counts.errors }}</p>
+    </div>
+</div>
+
+<!-- Explain the audit log retention policy. -->
+<p>
+    The newest 100 audit events are displayed below.
+    Audit records expire after approximately 90 days.
+</p>
+
+<!-- Display only approved security audit metadata. -->
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>User ID</th>
+            <th>Method</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th>Request ID</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for e in events %}
+        <tr>
+            <td>{{ e.at }}</td>
+            <td>{{ e.userId }}</td>
+            <td>{{ e.method }}</td>
+            <td>{{ e.route }}</td>
+            <td>{{ e.status }}</td>
+            <td>{{ e.requestId }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6">
+                No security audit events recorded yet.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

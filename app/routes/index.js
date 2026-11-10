@@ -81,6 +81,47 @@ const index = (app, db) => {
 
     // Error handling middleware
     app.use(ErrorHandler);
+    
+    // (12) Security Analytics Dashboard - accessible only by administrators.
+    app.get("/security-dashboard", isLoggedIn, isAdmin, (req, res, next) => {
+
+        // (12) Retrieve audit events from MongoDB, newest first.
+        db.collection("auditEvents")
+            .find({})
+            .sort({ at: -1 })
+            .toArray((err, rows) => {
+
+                if (err) return next(err);
+
+                // (12) Count different HTTP response outcomes.
+                const counts = {
+                    success: 0,
+                    denied: 0,
+                    errors: 0
+                };
+
+                for (const row of rows) {
+                    if (row.status >= 500) {
+                        counts.errors++;
+                    } else if (row.status >= 400) {
+                        counts.denied++;
+                    } else {
+                        counts.success++;
+                    }
+                }
+
+                // (12) Show the newest 100 audit events.
+                return res.render("security-dashboard", {
+                    user: { isAdmin: true },
+                    counts,
+                    events: rows.slice(0, 100),
+                    total: rows.length
+                });
+            });
+    });
+
+
+
 };
 
 module.exports = index;

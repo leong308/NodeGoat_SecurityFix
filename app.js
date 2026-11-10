@@ -77,8 +77,13 @@ function createApp(db, options = {}) {
     proxy: false,
     cookie: { maxAge: 30 * 60 * 1000, ...sessionOptions.cookie, httpOnly: true, sameSite: "lax", secure: true }
   }));
+  
+  // (12) Record security audit events after session handling and before CSRF checks.
+  app.use(require("./app/lib/audit").auditMiddleware(db));
+
   // (08) CSRF Protection
   app.use(require("./app/lib/csrf"));
+  
   // (04)Limit login and signup attempts to help prevent brute-force attacks
   const { rateLimit } = require("express-rate-limit");
   app.use(["/login", "/signup"], rateLimit({
