@@ -68,10 +68,28 @@ const index = (app, db) => {
     app.post("/memos", isLoggedIn, memosHandler.addMemos);
 
     // Handle redirect for learning resources link
+    
+    // (13) Only allow redirects to explicitly approved learning resources.
+    const allowedLearningUrls = new Set([
+        "https://www.khanacademy.org/economics-finance-domain/core-finance/investment-vehicles-tutorial/ira-401ks/v/traditional-iras"
+    ]);
+
+    // (13) Validate the destination before redirecting.
     app.get("/learn", isLoggedIn, (req, res) => {
-        // Insecure way to handle redirects by taking redirect url from query string
-        return res.redirect(req.query.url);
+        const destination = req.query.url;
+
+        // (13) Reject missing, malformed, or unapproved destinations.
+        if (
+            typeof destination !== "string" ||
+            !allowedLearningUrls.has(destination)
+        ) {
+            return res.status(400).send("Invalid learning resource URL.");
+        }
+
+        // (13) Redirect only to the approved HTTPS destination.
+        return res.redirect(302, destination);
     });
+
 
     // Research Page
     app.get("/research", isLoggedIn, researchHandler.displayResearch);
