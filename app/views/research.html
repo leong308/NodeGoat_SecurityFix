@@ -14,13 +14,36 @@
 
                 <form action="/research" method="get" role="search">
                     <div class="form-group">
-                        <input type="hidden" id="url" name="url" value="https://finance.yahoo.com/quote/"/>
-                        <input type="text" class="form-control" placeholder="Stock Symbol" name="symbol" />
+                        
+                    <!-- (14) Accept a stock symbol only; the server controls the research URL. -->
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Stock Symbol (e.g., AAPL)"
+                        name="symbol"
+                        maxlength="20"
+                        pattern="[A-Za-z0-9.^=-]{1,20}"
+                        required
+                    />
+
                         <p class="help-block">Enter Stock Symbol.</p>
                     </div>
 
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
+
+                <!-- (14) Display a trusted research link after symbol validation. -->
+                {% if quoteUrl %}
+                <div class="alert alert-info" style="margin-top:15px;">
+                    <p>Research result for: <strong>{{ symbol }}</strong></p>
+                    <a href="{{ quoteUrl }}"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                        View stock information on Yahoo Finance
+                    </a>
+                </div>
+                {% endif %}
+
 
             </div>
         </div>
